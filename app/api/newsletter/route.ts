@@ -5,6 +5,7 @@ import Newsletter from "@/models/Newsletter"
 export async function POST(request: NextRequest) {
   try {
     await connectDB()
+
     const { email } = await request.json()
 
     if (!email) {
@@ -15,28 +16,33 @@ export async function POST(request: NextRequest) {
     const existingSubscriber = await Newsletter.findOne({ email })
     if (existingSubscriber) {
       if (existingSubscriber.status === "unsubscribed") {
+        // Reactivate subscription
         existingSubscriber.status = "active"
         existingSubscriber.subscribedAt = new Date()
+        existingSubscriber.unsubscribedAt = undefined
         await existingSubscriber.save()
         return NextResponse.json({ message: "Successfully resubscribed to newsletter!" })
       }
       return NextResponse.json({ error: "Email already subscribed" }, { status: 400 })
     }
 
-    const subscriber = new Newsletter({ email })
-    await subscriber.save()
+    // Create new subscription
+    const newsletter = new Newsletter({ email })
+    await newsletter.save()
 
     return NextResponse.json({ message: "Successfully subscribed to newsletter!" })
   } catch (error) {
     console.error("Newsletter subscription error:", error)
-    return NextResponse.json({ error: "Failed to subscribe" }, { status: 500 })
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
     await connectDB()
-    const { email } = await request.json()
+
+    const { searchParams } = new URL(request.url)
+    const email = searchParams.get("email")
 
     if (!email) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
@@ -48,11 +54,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     subscriber.status = "unsubscribed"
+    subscriber.unsubscribedAt = new Date()
     await subscriber.save()
 
     return NextResponse.json({ message: "Successfully unsubscribed from newsletter!" })
   } catch (error) {
-    console.error("Newsletter unsubscribe error:", error)
-    return NextResponse.json({ error: "Failed to unsubscribe" }, { status: 500 })
+    console.error("Newsletter unsubscription error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

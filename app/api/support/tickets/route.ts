@@ -1,40 +1,35 @@
 import { type NextRequest, NextResponse } from "next/server"
 import connectDB from "@/lib/mongodb"
 import SupportTicket from "@/models/SupportTicket"
-import { verifyToken } from "@/lib/auth"
+import { getCurrentUser } from "@/lib/auth"
+
+function generateTicketNumber() {
+  const timestamp = Date.now().toString().slice(-6)
+  const random = Math.random().toString(36).substring(2, 5).toUpperCase()
+  return `TKT${timestamp}${random}`
+}
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB()
-    const user = await verifyToken(request)
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    const { name, email, subject, message, priority, category } = await request.json()
+
+    if (!name || !email || !subject || !message) {
+      return NextResponse.json({ error: "All required fields must be filled" }, { status: 400 })
     }
 
-    const { subject, description, category, priority, attachments } = await request.json()
-
-    if (!subject || !description || !category) {
-      return NextResponse.json({ error: "Subject, description, and category are required" }, { status: 400 })
-    }
-
-    // Generate ticket number
-    const ticketNumber = `TKT${Date.now().toString().slice(-6)}${Math.random().toString(36).substring(2, 5).toUpperCase()}`
+    const user = await getCurrentUser()
 
     const ticket = new SupportTicket({
-      ticketNumber,
-      userId: user.id,
+      ticketNumber: generateTicketNumber(),
+      userId: user?._id,
+      name,
+      email,
       subject,
-      description,
-      category,
+      message,
       priority: priority || "medium",
-      attachments: attachments || [],
-      messages: [
-        {
-          sender: user.id,
-          message: description,
-          timestamp: new Date(),
-        },
-      ],
+      category: category || "general",
     })
 
     await ticket.save()
@@ -44,40 +39,43 @@ export async function POST(request: NextRequest) {
       ticketNumber: ticket.ticketNumber,
     })
   } catch (error) {
-    console.error("Create support ticket error:", error)
-    return NextResponse.json({ error: "Failed to create ticket" }, { status: 500 })
+    console.error("Support ticket creation error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    await connectDB()
-    const user = await verifyToken(request)
-    if (!user) {
+    const user = await getCurrentUser()
+    if (!user || user.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    await connectDB()
 
     const { searchParams } = new URL(request.url)
     const page = Number.parseInt(searchParams.get("page") || "1")
     const limit = Number.parseInt(searchParams.get("limit") || "10")
     const status = searchParams.get("status")
+    const priority = searchParams.get("priority")
+    const category = searchParams.get("category")
 
-    const query: any = {}
-    if (user.role !== "admin") {
-      query.userId = user.id
-    }
-    if (status) query.status = status
+    const filter: any = {}
+    if (status) filter.status = status
+    if (priority) filter.priority = priority
+    if (category) filter.category = category
 
     const skip = (page - 1) * limit
 
-    const tickets = await SupportTicket.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate("userId", "profile.firstName profile.lastName email")
-      .populate("assignedTo", "profile.firstName profile.lastName")
-
-    const total = await SupportTicket.countDocuments(query)
+    const [tickets, total] = await Promise.all([
+      SupportTicket.find(filter)
+        .populate("userId", "profile.firstName profile.lastName email")
+        .populate("assignedTo", "profile.firstName profile.lastName")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      SupportTicket.countDocuments(filter),
+    ])
 
     return NextResponse.json({
       tickets,
@@ -89,7 +87,7 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("Get support tickets error:", error)
-    return NextResponse.json({ error: "Failed to fetch tickets" }, { status: 500 })
+    console.error("Error fetching support tickets:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

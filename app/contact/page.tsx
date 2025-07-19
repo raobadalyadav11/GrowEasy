@@ -3,14 +3,10 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { Mail, Phone, MapPin, Clock, Send } from "lucide-react"
-import { toast } from "sonner"
+import { Mail, Phone, MapPin, Clock } from "lucide-react"
+import Button from "@/components/ui/Button"
+import Input from "@/components/ui/Input"
+import { Card, CardBody, CardHeader } from "@/components/ui/Card"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -19,13 +15,13 @@ export default function ContactPage() {
     phone: "",
     subject: "",
     message: "",
-    category: "",
   })
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
+    setLoading(true)
 
     try {
       const response = await fetch("/api/contact", {
@@ -36,83 +32,89 @@ export default function ContactPage() {
         body: JSON.stringify(formData),
       })
 
-      const data = await response.json()
-
       if (response.ok) {
-        toast.success(data.message)
+        setSubmitted(true)
         setFormData({
           name: "",
           email: "",
           phone: "",
           subject: "",
           message: "",
-          category: "",
         })
       } else {
-        toast.error(data.error || "Failed to send message")
+        const error = await response.json()
+        alert(error.error || "Failed to send message")
       }
     } catch (error) {
-      toast.error("Something went wrong. Please try again.")
+      console.error("Contact form error:", error)
+      alert("Failed to send message")
     } finally {
-      setIsSubmitting(false)
+      setLoading(false)
     }
   }
 
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    })
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-              Contact Us
-            </h1>
-            <p className="text-gray-600 text-lg">
-              We'd love to hear from you. Send us a message and we'll respond as soon as possible.
-            </p>
-          </div>
+    <div className="min-h-screen bg-neutral-50 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-neutral-900 mb-4">Contact Us</h1>
+          <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+            Have questions or need support? We're here to help. Get in touch with our team.
+          </p>
+        </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Contact Information */}
-            <div className="lg:col-span-1 space-y-6">
-              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-gray-800">Get in Touch</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Contact Information */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <h2 className="text-xl font-semibold text-neutral-900">Get in Touch</h2>
+              </CardHeader>
+              <CardBody>
+                <div className="space-y-6">
                   <div className="flex items-start space-x-4">
-                    <div className="bg-blue-100 p-3 rounded-lg">
-                      <Mail className="h-6 w-6 text-blue-600" />
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                        <Mail className="w-5 h-5 text-primary-600" />
+                      </div>
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-800">Email</h3>
-                      <p className="text-gray-600">support@ecommerce.com</p>
-                      <p className="text-gray-600">business@ecommerce.com</p>
+                      <h3 className="text-sm font-medium text-neutral-900">Email</h3>
+                      <p className="text-sm text-neutral-600">support@ecommerce.com</p>
+                      <p className="text-sm text-neutral-600">sales@ecommerce.com</p>
                     </div>
                   </div>
 
                   <div className="flex items-start space-x-4">
-                    <div className="bg-green-100 p-3 rounded-lg">
-                      <Phone className="h-6 w-6 text-green-600" />
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                        <Phone className="w-5 h-5 text-primary-600" />
+                      </div>
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-800">Phone</h3>
-                      <p className="text-gray-600">+91 1234567890</p>
-                      <p className="text-gray-600">+91 0987654321</p>
+                      <h3 className="text-sm font-medium text-neutral-900">Phone</h3>
+                      <p className="text-sm text-neutral-600">+91 9876543210</p>
+                      <p className="text-sm text-neutral-600">+91 9876543211</p>
                     </div>
                   </div>
 
                   <div className="flex items-start space-x-4">
-                    <div className="bg-purple-100 p-3 rounded-lg">
-                      <MapPin className="h-6 w-6 text-purple-600" />
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                        <MapPin className="w-5 h-5 text-primary-600" />
+                      </div>
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-800">Address</h3>
-                      <p className="text-gray-600">
-                        123 Business District,
+                      <h3 className="text-sm font-medium text-neutral-900">Address</h3>
+                      <p className="text-sm text-neutral-600">
+                        123 Business Street
                         <br />
                         Mumbai, Maharashtra 400001
                         <br />
@@ -122,133 +124,147 @@ export default function ContactPage() {
                   </div>
 
                   <div className="flex items-start space-x-4">
-                    <div className="bg-orange-100 p-3 rounded-lg">
-                      <Clock className="h-6 w-6 text-orange-600" />
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-5 h-5 text-primary-600" />
+                      </div>
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-800">Business Hours</h3>
-                      <p className="text-gray-600">Monday - Friday: 9:00 AM - 6:00 PM</p>
-                      <p className="text-gray-600">Saturday: 10:00 AM - 4:00 PM</p>
-                      <p className="text-gray-600">Sunday: Closed</p>
+                      <h3 className="text-sm font-medium text-neutral-900">Business Hours</h3>
+                      <p className="text-sm text-neutral-600">
+                        Monday - Friday: 9:00 AM - 6:00 PM
+                        <br />
+                        Saturday: 10:00 AM - 4:00 PM
+                        <br />
+                        Sunday: Closed
+                      </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
 
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-2">Need Quick Help?</h3>
-                  <p className="text-blue-100 mb-4">
-                    Check out our FAQ section for instant answers to common questions.
-                  </p>
-                  <Button variant="secondary" className="w-full">
-                    Visit FAQ
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Contact Form */}
-            <div className="lg:col-span-2">
-              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-gray-800">Send us a Message</CardTitle>
-                </CardHeader>
-                <CardContent>
+          {/* Contact Form */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <h2 className="text-xl font-semibold text-neutral-900">Send us a Message</h2>
+              </CardHeader>
+              <CardBody>
+                {submitted ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Mail className="w-8 h-8 text-success-600" />
+                    </div>
+                    <h3 className="text-lg font-medium text-neutral-900 mb-2">Message Sent!</h3>
+                    <p className="text-neutral-600 mb-4">
+                      Thank you for contacting us. We'll get back to you within 24 hours.
+                    </p>
+                    <Button onClick={() => setSubmitted(false)}>Send Another Message</Button>
+                  </div>
+                ) : (
                   <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Full Name *</Label>
-                        <Input
-                          id="name"
-                          value={formData.name}
-                          onChange={(e) => handleChange("name", e.target.value)}
-                          placeholder="Enter your full name"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email Address *</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => handleChange("email", e.target.value)}
-                          placeholder="Enter your email"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <Input
-                          id="phone"
-                          value={formData.phone}
-                          onChange={(e) => handleChange("phone", e.target.value)}
-                          placeholder="Enter your phone number"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="category">Category</Label>
-                        <Select value={formData.category} onValueChange={(value) => handleChange("category", value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="general">General Inquiry</SelectItem>
-                            <SelectItem value="support">Technical Support</SelectItem>
-                            <SelectItem value="business">Business Partnership</SelectItem>
-                            <SelectItem value="complaint">Complaint</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="subject">Subject *</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <Input
-                        id="subject"
+                        label="Full Name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                        placeholder="Your full name"
+                      />
+                      <Input
+                        label="Email Address"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                        placeholder="your@email.com"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Input
+                        label="Phone Number"
+                        name="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        placeholder="+91 9876543210"
+                      />
+                      <Input
+                        label="Subject"
+                        name="subject"
                         value={formData.subject}
-                        onChange={(e) => handleChange("subject", e.target.value)}
-                        placeholder="Enter the subject"
+                        onChange={handleChange}
                         required
+                        placeholder="How can we help?"
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="message">Message *</Label>
-                      <Textarea
-                        id="message"
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-1">Message</label>
+                      <textarea
+                        name="message"
                         value={formData.message}
-                        onChange={(e) => handleChange("message", e.target.value)}
-                        placeholder="Enter your message"
-                        rows={6}
+                        onChange={handleChange}
                         required
+                        rows={6}
+                        className="input resize-none"
+                        placeholder="Tell us more about your inquiry..."
                       />
                     </div>
 
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    >
-                      {isSubmitting ? (
-                        "Sending..."
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4 mr-2" />
-                          Send Message
-                        </>
-                      )}
+                    <Button type="submit" loading={loading} className="w-full md:w-auto">
+                      Send Message
                     </Button>
                   </form>
-                </CardContent>
-              </Card>
-            </div>
+                )}
+              </CardBody>
+            </Card>
           </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mt-16">
+          <Card>
+            <CardHeader>
+              <h2 className="text-xl font-semibold text-neutral-900">Frequently Asked Questions</h2>
+            </CardHeader>
+            <CardBody>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="font-medium text-neutral-900 mb-2">How do I become a seller?</h3>
+                  <p className="text-sm text-neutral-600 mb-4">
+                    You can register as a seller by clicking the "Become a Seller" button and completing the application
+                    process with your business details and documents.
+                  </p>
+
+                  <h3 className="font-medium text-neutral-900 mb-2">What are the commission rates?</h3>
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Our commission rates vary by category, typically ranging from 5-15%. You can view detailed rates in
+                    your seller dashboard.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-medium text-neutral-900 mb-2">How do payouts work?</h3>
+                  <p className="text-sm text-neutral-600 mb-4">
+                    Payouts are processed weekly to your registered bank account. You can track all transactions in your
+                    seller dashboard.
+                  </p>
+
+                  <h3 className="font-medium text-neutral-900 mb-2">What support do you provide?</h3>
+                  <p className="text-sm text-neutral-600 mb-4">
+                    We provide 24/7 customer support, seller onboarding assistance, marketing tools, and technical
+                    support for all platform features.
+                  </p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
         </div>
       </div>
     </div>

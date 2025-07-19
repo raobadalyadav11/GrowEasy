@@ -1,6 +1,13 @@
-import mongoose from "mongoose"
+import mongoose, { type Document, Schema } from "mongoose"
 
-const newsletterSchema = new mongoose.Schema(
+export interface INewsletter extends Document {
+  email: string
+  status: "active" | "unsubscribed"
+  subscribedAt: Date
+  unsubscribedAt?: Date
+}
+
+const NewsletterSchema = new Schema<INewsletter>(
   {
     email: {
       type: String,
@@ -18,9 +25,8 @@ const newsletterSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    source: {
-      type: String,
-      default: "website",
+    unsubscribedAt: {
+      type: Date,
     },
   },
   {
@@ -28,4 +34,4 @@ const newsletterSchema = new mongoose.Schema(
   },
 )
 
-export default mongoose.models.Newsletter || mongoose.model("Newsletter", newsletterSchema)
+export default mongoose.models.Newsletter || mongoose.model<INewsletter>("Newsletter", NewsletterSchema)

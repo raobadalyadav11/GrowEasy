@@ -1,6 +1,18 @@
-import mongoose from "mongoose"
+import mongoose, { type Document, Schema } from "mongoose"
 
-const feedbackSchema = new mongoose.Schema(
+export interface IFeedback extends Document {
+  name: string
+  email: string
+  rating: number
+  message: string
+  status: "pending" | "reviewed" | "responded"
+  response?: string
+  respondedBy?: mongoose.Types.ObjectId
+  respondedAt?: Date
+  createdAt: Date
+}
+
+const FeedbackSchema = new Schema<IFeedback>(
   {
     name: {
       type: String,
@@ -19,38 +31,24 @@ const feedbackSchema = new mongoose.Schema(
       min: 1,
       max: 5,
     },
-    subject: {
-      type: String,
-      required: true,
-      trim: true,
-    },
     message: {
       type: String,
       required: true,
-      trim: true,
-    },
-    category: {
-      type: String,
-      enum: ["product", "service", "website", "delivery", "support", "other"],
-      default: "other",
     },
     status: {
       type: String,
-      enum: ["new", "reviewed", "resolved"],
-      default: "new",
+      enum: ["pending", "reviewed", "responded"],
+      default: "pending",
     },
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
+    response: {
+      type: String,
+    },
+    respondedBy: {
+      type: Schema.Types.ObjectId,
       ref: "User",
-      required: false,
     },
-    adminResponse: {
-      message: String,
-      respondedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-      respondedAt: Date,
+    respondedAt: {
+      type: Date,
     },
   },
   {
@@ -58,4 +56,4 @@ const feedbackSchema = new mongoose.Schema(
   },
 )
 
-export default mongoose.models.Feedback || mongoose.model("Feedback", feedbackSchema)
+export default mongoose.models.Feedback || mongoose.model<IFeedback>("Feedback", FeedbackSchema)

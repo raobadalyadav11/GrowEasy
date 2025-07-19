@@ -1,6 +1,27 @@
-import mongoose from "mongoose"
+import mongoose, { type Document, Schema } from "mongoose"
 
-const supportTicketSchema = new mongoose.Schema(
+export interface ISupportTicket extends Document {
+  ticketNumber: string
+  userId?: mongoose.Types.ObjectId
+  name: string
+  email: string
+  subject: string
+  message: string
+  priority: "low" | "medium" | "high" | "urgent"
+  status: "open" | "in-progress" | "resolved" | "closed"
+  category: "technical" | "billing" | "general" | "product" | "account"
+  assignedTo?: mongoose.Types.ObjectId
+  responses: Array<{
+    message: string
+    respondedBy: mongoose.Types.ObjectId
+    respondedAt: Date
+    isAdmin: boolean
+  }>
+  resolvedAt?: Date
+  createdAt: Date
+}
+
+const SupportTicketSchema = new Schema<ISupportTicket>(
   {
     ticketNumber: {
       type: String,
@@ -8,23 +29,27 @@ const supportTicketSchema = new mongoose.Schema(
       unique: true,
     },
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
+    },
+    name: {
+      type: String,
       required: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
     },
     subject: {
       type: String,
       required: true,
       trim: true,
     },
-    description: {
+    message: {
       type: String,
-      required: true,
-      trim: true,
-    },
-    category: {
-      type: String,
-      enum: ["technical", "billing", "order", "product", "account", "other"],
       required: true,
     },
     priority: {
@@ -37,36 +62,39 @@ const supportTicketSchema = new mongoose.Schema(
       enum: ["open", "in-progress", "resolved", "closed"],
       default: "open",
     },
+    category: {
+      type: String,
+      enum: ["technical", "billing", "general", "product", "account"],
+      default: "general",
+    },
     assignedTo: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
     },
-    messages: [
+    responses: [
       {
-        sender: {
-          type: mongoose.Schema.Types.ObjectId,
+        message: String,
+        respondedBy: {
+          type: Schema.Types.ObjectId,
           ref: "User",
-          required: true,
         },
-        message: {
-          type: String,
-          required: true,
-        },
-        attachments: [String],
-        timestamp: {
+        respondedAt: {
           type: Date,
           default: Date.now,
         },
+        isAdmin: {
+          type: Boolean,
+          default: false,
+        },
       },
     ],
-    attachments: [String],
-    tags: [String],
-    resolvedAt: Date,
-    closedAt: Date,
+    resolvedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
   },
 )
 
-export default mongoose.models.SupportTicket || mongoose.model("SupportTicket", supportTicketSchema)
+export default mongoose.models.SupportTicket || mongoose.model<ISupportTicket>("SupportTicket", SupportTicketSchema)

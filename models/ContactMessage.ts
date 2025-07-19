@@ -1,6 +1,19 @@
-import mongoose from "mongoose"
+import mongoose, { type Document, Schema } from "mongoose"
 
-const contactMessageSchema = new mongoose.Schema(
+export interface IContactMessage extends Document {
+  name: string
+  email: string
+  phone?: string
+  subject: string
+  message: string
+  status: "new" | "read" | "responded"
+  response?: string
+  respondedBy?: mongoose.Types.ObjectId
+  respondedAt?: Date
+  createdAt: Date
+}
+
+const ContactMessageSchema = new Schema<IContactMessage>(
   {
     name: {
       type: String,
@@ -25,30 +38,21 @@ const contactMessageSchema = new mongoose.Schema(
     message: {
       type: String,
       required: true,
-      trim: true,
-    },
-    category: {
-      type: String,
-      enum: ["general", "support", "business", "partnership", "complaint", "other"],
-      default: "general",
     },
     status: {
       type: String,
-      enum: ["new", "read", "replied", "resolved"],
+      enum: ["new", "read", "responded"],
       default: "new",
     },
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: false,
+    response: {
+      type: String,
     },
-    adminResponse: {
-      message: String,
-      respondedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-      respondedAt: Date,
+    respondedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    respondedAt: {
+      type: Date,
     },
   },
   {
@@ -56,4 +60,4 @@ const contactMessageSchema = new mongoose.Schema(
   },
 )
 
-export default mongoose.models.ContactMessage || mongoose.model("ContactMessage", contactMessageSchema)
+export default mongoose.models.ContactMessage || mongoose.model<IContactMessage>("ContactMessage", ContactMessageSchema)

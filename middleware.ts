@@ -4,14 +4,17 @@ import { jwtVerify } from "jose"
 
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || "your-secret-key")
 
+// Only protect these base paths
+const protectedPaths = ["/admin", "/seller", "/customer"]
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Public routes that don't require authentication
-  const publicRoutes = ["/", "/auth/login", "/auth/register", "/auth/forgot-password"]
+  // Check if the path starts with one of the protected routes
+  const isProtected = protectedPaths.some((path) => pathname.startsWith(path))
 
-  if (publicRoutes.includes(pathname)) {
-    return NextResponse.next()
+  if (!isProtected) {
+    return NextResponse.next() // allow access to all other routes
   }
 
   // Get token from cookies
@@ -25,7 +28,7 @@ export async function middleware(request: NextRequest) {
     const { payload } = await jwtVerify(token, secret)
     const userRole = payload.role as string
 
-    // Role-based route protection
+    // Allow access only if the role matches the path
     if (pathname.startsWith("/admin") && userRole !== "admin") {
       return NextResponse.redirect(new URL("/unauthorized", request.url))
     }
@@ -44,6 +47,7 @@ export async function middleware(request: NextRequest) {
   }
 }
 
+// Match all routes so middleware can decide which to protect
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico|public).*)"],
 }

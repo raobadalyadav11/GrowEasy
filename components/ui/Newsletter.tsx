@@ -78,7 +78,14 @@ export default function Newsletter() {
             className="bg-white border-0"
           />
         </div>
-        <Button
-          type="submit"
-          loading={loading}
-          className="bg-white text-primary-600 hover:bg-primary-50 border-0 whit\
+        <Button type="submit" loading={loading} className="bg-white text-primary-600 hover:bg-primary-50 border-0 whit">
+          Subscribe
+        </Button>
+      </form>
+
+      <p className="text-xs text-primary-200 mt-3 text-center">
+        By subscribing, you agree to our Privacy Policy and Terms of Service.
+      </p>
+    </div>
+  )
+}

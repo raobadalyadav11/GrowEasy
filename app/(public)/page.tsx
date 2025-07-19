@@ -1,7 +1,26 @@
 import Link from "next/link"
-import { ShoppingBag, Users, TrendingUp, Shield, Zap, Globe, Star, ArrowRight, CheckCircle } from "lucide-react"
-import Button from "@/components/ui/Button"
-import { Card, CardBody } from "@/components/ui/Card"
+import {
+  ShoppingBag,
+  Users,
+  TrendingUp,
+  Shield,
+  Zap,
+  Globe,
+  Star,
+  ArrowRight,
+  CheckCircle,
+  Award,
+  Truck,
+  CreditCard,
+  Headphones,
+  Target,
+  BarChart3,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import Navbar from "@/components/layout/Navbar"
+import Footer from "@/components/layout/Footer"
 
 export default function HomePage() {
   const features = [
@@ -9,31 +28,37 @@ export default function HomePage() {
       icon: ShoppingBag,
       title: "Multi-Vendor Marketplace",
       description: "Connect buyers with multiple sellers in one unified platform with seamless transactions",
+      color: "from-blue-500 to-blue-600",
     },
     {
       icon: TrendingUp,
       title: "Advanced Analytics",
       description: "Real-time insights and analytics to help sellers optimize their business performance",
+      color: "from-green-500 to-green-600",
     },
     {
       icon: Users,
       title: "Seller Management",
       description: "Comprehensive tools for managing sellers, approvals, and business relationships",
+      color: "from-purple-500 to-purple-600",
     },
     {
       icon: Shield,
       title: "Secure Payments",
       description: "Integrated Razorpay with multiple payment options and fraud protection",
+      color: "from-red-500 to-red-600",
     },
     {
       icon: Zap,
       title: "Lightning Fast",
       description: "Optimized performance with fast loading times and smooth user experience",
+      color: "from-yellow-500 to-yellow-600",
     },
     {
       icon: Globe,
       title: "Global Ready",
       description: "Built for scale with multi-currency support and international shipping",
+      color: "from-indigo-500 to-indigo-600",
     },
   ]
 
@@ -43,18 +68,24 @@ export default function HomePage() {
       role: "Electronics Seller",
       content: "This platform has transformed my business. Sales increased by 300% in just 6 months!",
       rating: 5,
+      avatar: "/placeholder-user.jpg",
+      company: "TechWorld Electronics",
     },
     {
       name: "Priya Sharma",
       role: "Fashion Retailer",
       content: "The seller dashboard is incredibly intuitive. Managing inventory has never been easier.",
       rating: 5,
+      avatar: "/placeholder-user.jpg",
+      company: "StyleHub Fashion",
     },
     {
       name: "Amit Patel",
       role: "Home Decor Seller",
       content: "Excellent support team and great commission structure. Highly recommended!",
       rating: 5,
+      avatar: "/placeholder-user.jpg",
+      company: "HomeStyle Decor",
     },
   ]
 
@@ -67,62 +98,54 @@ export default function HomePage() {
     "Marketing and promotional tools",
   ]
 
+  const stats = [
+    { number: "10K+", label: "Active Sellers", icon: Users },
+    { number: "1M+", label: "Happy Customers", icon: Target },
+    { number: "50K+", label: "Products Listed", icon: ShoppingBag },
+    { number: "99.9%", label: "Uptime", icon: BarChart3 },
+  ]
+
+  const whyChooseUs = [
+    {
+      icon: Award,
+      title: "Trusted Platform",
+      description: "Verified sellers and secure transactions",
+    },
+    {
+      icon: Truck,
+      title: "Fast Delivery",
+      description: "Quick and reliable shipping nationwide",
+    },
+    {
+      icon: CreditCard,
+      title: "Secure Payments",
+      description: "Multiple payment options with full security",
+    },
+    {
+      icon: Headphones,
+      title: "24/7 Support",
+      description: "Round-the-clock customer assistance",
+    },
+  ]
+
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="bg-white/95 backdrop-blur-sm shadow-sm border-b border-neutral-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="p-2 bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg">
-                <ShoppingBag className="h-6 w-6 text-white" />
-              </div>
-              <span className="ml-3 text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">
-                GrowEasy
-              </span>
-            </div>
-            <nav className="hidden md:flex space-x-8">
-              <Link href="/features" className="text-neutral-600 hover:text-primary-600 transition-colors font-medium">
-                Features
-              </Link>
-              <Link href="/pricing" className="text-neutral-600 hover:text-primary-600 transition-colors font-medium">
-                Pricing
-              </Link>
-              <Link href="/sellers" className="text-neutral-600 hover:text-primary-600 transition-colors font-medium">
-                For Sellers
-              </Link>
-              <Link href="/support" className="text-neutral-600 hover:text-primary-600 transition-colors font-medium">
-                Support
-              </Link>
-            </nav>
-            <div className="flex items-center space-x-4">
-              <Link href="/auth/login">
-                <Button variant="outline" size="sm" className="font-medium bg-transparent">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/auth/register">
-                <Button
-                  size="sm"
-                  className="font-medium bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800"
-                >
-                  Get Started
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-primary-50 via-white to-secondary-50 py-20 overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute top-20 right-10 w-72 h-72 bg-secondary-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-accent-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-primary-100 rounded-full text-primary-700 text-sm font-medium mb-6">
+            <Badge className="inline-flex items-center px-4 py-2 bg-primary-100 text-primary-700 text-sm font-medium mb-6">
               <Star className="h-4 w-4 mr-2" />
               Trusted by 10,000+ sellers across India
-            </div>
+            </Badge>
+
             <h1 className="text-4xl md:text-6xl font-bold text-neutral-900 mb-6 leading-tight">
               Build Your
               <span className="block bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
@@ -130,45 +153,41 @@ export default function HomePage() {
               </span>
               Online
             </h1>
+
             <p className="text-xl md:text-2xl text-neutral-600 mb-8 max-w-3xl mx-auto leading-relaxed">
               Join India's fastest-growing e-commerce platform. Start selling today with zero setup fees, powerful
               tools, and dedicated support to grow your business.
             </p>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link href="/auth/register">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-lg px-8 py-4"
+                  className="w-full sm:w-auto bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   Start Selling Free
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link href="/demo">
+              <Link href="/products">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto text-lg px-8 py-4 border-2 hover:bg-neutral-50 bg-transparent"
+                  className="w-full sm:w-auto text-lg px-8 py-4 border-2 hover:bg-neutral-50 bg-transparent shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  Watch Demo
+                  Browse Products
                 </Button>
               </Link>
             </div>
 
             {/* Trust Indicators */}
             <div className="flex flex-wrap justify-center items-center gap-8 text-neutral-500">
-              <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-success-600 mr-2" />
-                <span className="font-medium">No Setup Fees</span>
-              </div>
-              <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-success-600 mr-2" />
-                <span className="font-medium">24/7 Support</span>
-              </div>
-              <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-success-600 mr-2" />
-                <span className="font-medium">Secure Payments</span>
-              </div>
+              {whyChooseUs.map((item, index) => (
+                <div key={index} className="flex items-center">
+                  <item.icon className="h-5 w-5 text-success-600 mr-2" />
+                  <span className="font-medium">{item.title}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -177,31 +196,18 @@ export default function HomePage() {
       {/* Stats Section */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div className="space-y-2">
-              <div className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">
-                10K+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center group">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-primary-100 to-primary-200 rounded-2xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <stat.icon className="h-8 w-8 text-primary-600" />
+                </div>
+                <div className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent mb-2">
+                  {stat.number}
+                </div>
+                <div className="text-neutral-600 font-medium">{stat.label}</div>
               </div>
-              <div className="text-neutral-600 font-medium">Active Sellers</div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-4xl font-bold bg-gradient-to-r from-success-600 to-success-700 bg-clip-text text-transparent">
-                1M+
-              </div>
-              <div className="text-neutral-600 font-medium">Happy Customers</div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-4xl font-bold bg-gradient-to-r from-warning-500 to-warning-600 bg-clip-text text-transparent">
-                50K+
-              </div>
-              <div className="text-neutral-600 font-medium">Products Listed</div>
-            </div>
-            <div className="space-y-2">
-              <div className="text-4xl font-bold bg-gradient-to-r from-secondary-600 to-secondary-700 bg-clip-text text-transparent">
-                99.9%
-              </div>
-              <div className="text-neutral-600 font-medium">Uptime</div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -210,6 +216,9 @@ export default function HomePage() {
       <section className="py-20 bg-gradient-to-b from-neutral-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
+            <Badge className="inline-flex items-center px-4 py-2 bg-secondary-100 text-secondary-700 text-sm font-medium mb-4">
+              Features
+            </Badge>
             <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">Everything You Need to Succeed</h2>
             <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
               Powerful tools and features designed to help you build, manage, and scale your online business.
@@ -218,40 +227,50 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="text-center hover-lift border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-                <CardBody className="p-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-primary-100 to-primary-200 rounded-2xl mb-6">
-                    <feature.icon className="h-8 w-8 text-primary-600" />
+              <Card
+                key={index}
+                className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:-translate-y-2"
+              >
+                <CardContent className="p-8 text-center">
+                  <div
+                    className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r ${feature.color} rounded-2xl mb-6 group-hover:scale-110 transition-transform duration-300`}
+                  >
+                    <feature.icon className="h-8 w-8 text-white" />
                   </div>
                   <h3 className="text-xl font-semibold text-neutral-900 mb-3">{feature.title}</h3>
                   <p className="text-neutral-600 leading-relaxed">{feature.description}</p>
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
+      {/* Why Choose Us Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
+              <Badge className="inline-flex items-center px-4 py-2 bg-success-100 text-success-700 text-sm font-medium mb-4">
+                Why Choose Us
+              </Badge>
               <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6">Why Choose GrowEasy?</h2>
               <p className="text-xl text-neutral-600 mb-8">
                 We provide everything you need to start, manage, and grow your online business successfully.
               </p>
               <div className="space-y-4">
                 {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-center">
-                    <CheckCircle className="h-6 w-6 text-success-600 mr-3 flex-shrink-0" />
+                  <div key={index} className="flex items-center group">
+                    <CheckCircle className="h-6 w-6 text-success-600 mr-3 flex-shrink-0 group-hover:scale-110 transition-transform duration-300" />
                     <span className="text-neutral-700 font-medium">{benefit}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div className="relative">
-              <div className="bg-gradient-to-r from-primary-600 to-secondary-600 rounded-2xl p-8 text-white">
+              <div className="bg-gradient-to-r from-primary-600 to-secondary-600 rounded-2xl p-8 text-white shadow-2xl">
+                <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/20 rounded-full"></div>
+                <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-white/20 rounded-full"></div>
                 <h3 className="text-2xl font-bold mb-4">Ready to Get Started?</h3>
                 <p className="text-primary-100 mb-6">
                   Join thousands of successful sellers who have grown their business with GrowEasy.
@@ -260,7 +279,7 @@ export default function HomePage() {
                   <Button
                     size="lg"
                     variant="secondary"
-                    className="w-full bg-white text-primary-600 hover:bg-neutral-50"
+                    className="w-full bg-white text-primary-600 hover:bg-neutral-50 shadow-lg hover:shadow-xl transition-all duration-300"
                   >
                     Create Your Store Now
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -276,6 +295,9 @@ export default function HomePage() {
       <section className="py-20 bg-gradient-to-b from-neutral-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
+            <Badge className="inline-flex items-center px-4 py-2 bg-warning-100 text-warning-700 text-sm font-medium mb-4">
+              Testimonials
+            </Badge>
             <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">What Our Sellers Say</h2>
             <p className="text-xl text-neutral-600">
               Don't just take our word for it - hear from successful sellers on our platform.
@@ -284,19 +306,28 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-lg bg-white">
-                <CardBody className="p-8">
+              <Card
+                key={index}
+                className="border-0 shadow-lg bg-white hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
+              >
+                <CardContent className="p-8">
                   <div className="flex items-center mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
                       <Star key={i} className="h-5 w-5 text-warning-500 fill-current" />
                     ))}
                   </div>
-                  <p className="text-neutral-700 mb-6 italic">"{testimonial.content}"</p>
-                  <div>
-                    <div className="font-semibold text-neutral-900">{testimonial.name}</div>
-                    <div className="text-sm text-neutral-600">{testimonial.role}</div>
+                  <p className="text-neutral-700 mb-6 italic leading-relaxed">"{testimonial.content}"</p>
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-gradient-to-r from-primary-600 to-primary-700 rounded-full flex items-center justify-center text-white font-bold mr-4">
+                      {testimonial.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-neutral-900">{testimonial.name}</div>
+                      <div className="text-sm text-neutral-600">{testimonial.role}</div>
+                      <div className="text-xs text-primary-600 font-medium">{testimonial.company}</div>
+                    </div>
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -306,6 +337,11 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-primary-600 via-primary-700 to-secondary-600 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
+        <div className="absolute top-0 left-0 w-full h-full">
+          <div className="absolute top-20 left-20 w-40 h-40 bg-white/10 rounded-full"></div>
+          <div className="absolute bottom-20 right-20 w-60 h-60 bg-white/10 rounded-full"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-white/5 rounded-full"></div>
+        </div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Transform Your Business?</h2>
           <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
@@ -317,7 +353,7 @@ export default function HomePage() {
               <Button
                 size="lg"
                 variant="secondary"
-                className="w-full sm:w-auto bg-white text-primary-600 hover:bg-neutral-50 text-lg px-8 py-4"
+                className="w-full sm:w-auto bg-white text-primary-600 hover:bg-neutral-50 text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Start Your Free Store
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -327,7 +363,7 @@ export default function HomePage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-auto border-2 border-white text-white hover:bg-white hover:text-primary-600 text-lg px-8 py-4 bg-transparent"
+                className="w-full sm:w-auto border-2 border-white text-white hover:bg-white hover:text-primary-600 text-lg px-8 py-4 bg-transparent shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Talk to Sales
               </Button>
@@ -336,124 +372,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-neutral-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <div className="p-2 bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg">
-                  <ShoppingBag className="h-6 w-6 text-white" />
-                </div>
-                <span className="ml-3 text-xl font-bold">GrowEasy</span>
-              </div>
-              <p className="text-neutral-400 leading-relaxed">
-                Empowering businesses to grow online with cutting-edge e-commerce solutions and dedicated support.
-              </p>
-              <div className="flex space-x-4">
-                <div className="w-10 h-10 bg-neutral-800 rounded-lg flex items-center justify-center hover:bg-neutral-700 cursor-pointer transition-colors">
-                  <span className="text-sm font-bold">f</span>
-                </div>
-                <div className="w-10 h-10 bg-neutral-800 rounded-lg flex items-center justify-center hover:bg-neutral-700 cursor-pointer transition-colors">
-                  <span className="text-sm font-bold">t</span>
-                </div>
-                <div className="w-10 h-10 bg-neutral-800 rounded-lg flex items-center justify-center hover:bg-neutral-700 cursor-pointer transition-colors">
-                  <span className="text-sm font-bold">in</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Platform</h3>
-              <ul className="space-y-3 text-neutral-400">
-                <li>
-                  <Link href="/features" className="hover:text-white transition-colors">
-                    Features
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/pricing" className="hover:text-white transition-colors">
-                    Pricing
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/integrations" className="hover:text-white transition-colors">
-                    Integrations
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/api" className="hover:text-white transition-colors">
-                    API
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Resources</h3>
-              <ul className="space-y-3 text-neutral-400">
-                <li>
-                  <Link href="/help" className="hover:text-white transition-colors">
-                    Help Center
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/docs" className="hover:text-white transition-colors">
-                    Documentation
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/blog" className="hover:text-white transition-colors">
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/webinars" className="hover:text-white transition-colors">
-                    Webinars
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Company</h3>
-              <ul className="space-y-3 text-neutral-400">
-                <li>
-                  <Link href="/about" className="hover:text-white transition-colors">
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/careers" className="hover:text-white transition-colors">
-                    Careers
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="hover:text-white transition-colors">
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/press" className="hover:text-white transition-colors">
-                    Press
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-neutral-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-neutral-400 text-sm">&copy; 2024 GrowEasy. All rights reserved.</p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <Link href="/privacy" className="text-neutral-400 hover:text-white text-sm transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="text-neutral-400 hover:text-white text-sm transition-colors">
-                Terms of Service
-              </Link>
-              <Link href="/cookies" className="text-neutral-400 hover:text-white text-sm transition-colors">
-                Cookie Policy
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

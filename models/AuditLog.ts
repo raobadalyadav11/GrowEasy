@@ -4,7 +4,7 @@ export interface IAuditLog extends Document {
   adminId: mongoose.Types.ObjectId
   action: string
   target: string
-  targetId?: string
+  targetId?: mongoose.Types.ObjectId
   details: Record<string, any>
   ipAddress?: string
   userAgent?: string
@@ -21,28 +21,37 @@ const AuditLogSchema = new Schema<IAuditLog>(
     action: {
       type: String,
       required: true,
+      trim: true,
     },
     target: {
       type: String,
       required: true,
+      trim: true,
     },
     targetId: {
-      type: String,
+      type: Schema.Types.ObjectId,
     },
     details: {
       type: Schema.Types.Mixed,
-      default: {},
+      required: true,
     },
     ipAddress: {
       type: String,
+      trim: true,
     },
     userAgent: {
       type: String,
+      trim: true,
     },
   },
   {
     timestamps: true,
   },
 )
+
+// Indexes
+AuditLogSchema.index({ adminId: 1, createdAt: -1 })
+AuditLogSchema.index({ action: 1 })
+AuditLogSchema.index({ target: 1 })
 
 export default mongoose.models.AuditLog || mongoose.model<IAuditLog>("AuditLog", AuditLogSchema)

@@ -1,66 +1,53 @@
 import mongoose, { type Document, Schema } from "mongoose"
 
 export interface INotification extends Document {
+  userId: mongoose.Types.ObjectId
+  type: "application" | "enquiry" | "order" | "payout" | "general"
   title: string
   message: string
-  type: "email" | "sms" | "push"
-  recipients: Array<{
-    userId: mongoose.Types.ObjectId
-    email?: string
-    phone?: string
-    status: "pending" | "sent" | "failed"
-    sentAt?: Date
-    error?: string
-  }>
-  template?: string
-  scheduledAt?: Date
-  sentBy: mongoose.Types.ObjectId
+  isRead: boolean
+  data?: Record<string, any>
   createdAt: Date
 }
 
 const NotificationSchema = new Schema<INotification>(
   {
-    title: {
-      type: String,
-      required: true,
-    },
-    message: {
-      type: String,
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
     type: {
       type: String,
-      enum: ["email", "sms", "push"],
+      enum: ["application", "enquiry", "order", "payout", "general"],
       required: true,
     },
-    recipients: [
-      {
-        userId: {
-          type: Schema.Types.ObjectId,
-          ref: "User",
-        },
-        email: String,
-        phone: String,
-        status: {
-          type: String,
-          enum: ["pending", "sent", "failed"],
-          default: "pending",
-        },
-        sentAt: Date,
-        error: String,
-      },
-    ],
-    template: String,
-    scheduledAt: Date,
-    sentBy: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
+    title: {
+      type: String,
       required: true,
+      trim: true,
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    isRead: {
+      type: Boolean,
+      default: false,
+    },
+    data: {
+      type: Schema.Types.Mixed,
+      default: {},
     },
   },
   {
     timestamps: true,
   },
 )
+
+// Indexes
+NotificationSchema.index({ userId: 1, isRead: 1 })
+NotificationSchema.index({ createdAt: -1 })
 
 export default mongoose.models.Notification || mongoose.model<INotification>("Notification", NotificationSchema)

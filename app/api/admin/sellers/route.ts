@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { getCurrentUser } from "@/lib/auth"
 import connectDB from "@/lib/mongodb"
 import User from "@/models/User"
-import { getCurrentUser } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,15 +16,25 @@ export async function GET(request: NextRequest) {
     const page = Number.parseInt(searchParams.get("page") || "1")
     const limit = Number.parseInt(searchParams.get("limit") || "10")
     const status = searchParams.get("status")
+    const search = searchParams.get("search")
 
     const filter: any = { role: "seller" }
     if (status) filter.status = status
+    if (search) {
+      filter.$or = [
+        { "profile.firstName": { $regex: search, $options: "i" } },
+        { "profile.lastName": { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { "businessInfo.businessName": { $regex: search, $options: "i" } },
+      ]
+    }
 
     const skip = (page - 1) * limit
 
-    const sellers = await User.find(filter).select("-password").sort({ createdAt: -1 }).skip(skip).limit(limit)
-
-    const total = await User.countDocuments(filter)
+    const [sellers, total] = await Promise.all([
+      User.find(filter).select("-password").sort({ createdAt: -1 }).skip(skip).limit(limit),
+      User.countDocuments(filter),
+    ])
 
     return NextResponse.json({
       sellers,

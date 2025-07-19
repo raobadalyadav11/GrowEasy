@@ -6,7 +6,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
-export async function uploadToCloudinary(file: File, folder = "ecommerce"): Promise<string> {
+export async function uploadToCloudinary(file: File, folder = "uploads"): Promise<string> {
   const bytes = await file.arrayBuffer()
   const buffer = Buffer.from(bytes)
 
@@ -16,11 +16,14 @@ export async function uploadToCloudinary(file: File, folder = "ecommerce"): Prom
         {
           folder,
           resource_type: "auto",
-          transformation: [{ width: 1000, height: 1000, crop: "limit" }, { quality: "auto" }],
+          transformation: [{ width: 1000, height: 1000, crop: "limit" }, { quality: "auto" }, { format: "auto" }],
         },
         (error, result) => {
-          if (error) reject(error)
-          else resolve(result?.secure_url || "")
+          if (error) {
+            reject(error)
+          } else {
+            resolve(result!.secure_url)
+          }
         },
       )
       .end(buffer)

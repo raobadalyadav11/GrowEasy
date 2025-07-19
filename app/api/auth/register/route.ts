@@ -1,46 +1,34 @@
 import { type NextRequest, NextResponse } from "next/server"
+import bcrypt from "bcryptjs"
+import { cookies } from "next/headers"
 import connectDB from "@/lib/mongodb"
 import User from "@/models/User"
 import Wallet from "@/models/Wallet"
-import { hashPassword, createToken, setAuthCookie } from "@/lib/auth"
-import { validateEmail, validatePhone } from "@/lib/utils"
+import { generateToken } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
+    const data = await request.json()
+    const { firstName, lastName, email, password, phone, role, businessInfo, bankDetails, documents } = data
+
+    if (!firstName || !lastName || !email || !password) {
+      return NextResponse.json({ error: "All required fields must be provided" }, { status: 400 })
+    }
+
     await connectDB()
 
-    const body = await request.json()
-    const { email, password, firstName, lastName, phone, role, businessInfo, bankDetails } = body
-
-    // Validation
-    if (!email || !password || !firstName || !lastName) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
-    }
-
-    if (!validateEmail(email)) {
-      return NextResponse.json({ error: "Invalid email format" }, { status: 400 })
-    }
-
-    if (password.length < 6) {
-      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 })
-    }
-
-    if (phone && !validatePhone(phone)) {
-      return NextResponse.json({ error: "Invalid phone number format" }, { status: 400 })
-    }
-
     // Check if user already exists
-    const existingUser = await User.findOne({ email })
+    const existingUser = await User.findOne({ email: email.toLowerCase() })
     if (existingUser) {
-      return NextResponse.json({ error: "User already exists" }, { status: 400 })
+      return NextResponse.json({ error: "User already exists with this email" }, { status: 400 })
     }
 
     // Hash password
-    const hashedPassword = await hashPassword(password)
+    const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Create user
+    // Create user data
     const userData: any = {
-      email,
+      email: email.toLowerCase(),
       password: hashedPassword,
       role: role || "customer",
       status: role === "seller" ? "pending" : "active",
@@ -51,16 +39,33 @@ export async function POST(request: NextRequest) {
       },
     }
 
-    if (role === "seller" && businessInfo) {
+    // Add seller-specific data
+    if (role === "seller") {
       userData.businessInfo = businessInfo
       userData.bankDetails = bankDetails
+      userData.documents = documents
     }
 
     const user = new User(userData)
     await user.save()
 
-    // Create wallet for sellers
-    if (role === "seller") {
+    // For customers and admins, log them in immediately
+    if (role !== "seller") {
+      const token = await generateToken({
+        userId: user._id.toString(),
+        email: user.email,
+        role: user.role,
+      })
+
+      const cookieStore = cookies()
+      cookieStore.set("auth-token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60, // 7 days
+      })
+    } else {
+      // Create wallet for sellers
       const wallet = new Wallet({
         sellerId: user._id,
         balance: 0,
@@ -71,26 +76,19 @@ export async function POST(request: NextRequest) {
       await wallet.save()
     }
 
-    // Create JWT token
-    const token = await createToken({
-      userId: user._id,
-      email: user.email,
-      role: user.role,
-    })
-
-    // Set cookie
-    await setAuthCookie(token)
-
-    return NextResponse.json({
-      message: "User created successfully",
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-        profile: user.profile,
+    return NextResponse.json(
+      {
+        message: role === "seller" ? "Registration successful. Awaiting approval." : "Registration successful",
+        user: {
+          id: user._id,
+          email: user.email,
+          role: user.role,
+          status: user.status,
+          profile: user.profile,
+        },
       },
-    })
+      { status: 201 },
+    )
   } catch (error) {
     console.error("Registration error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { getCurrentUser } from "@/lib/auth"
 import connectDB from "@/lib/mongodb"
 import User from "@/models/User"
-import { getCurrentUser } from "@/lib/auth"
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -12,7 +12,16 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     await connectDB()
 
-    const seller = await User.findByIdAndUpdate(params.id, { status: "rejected" }, { new: true }).select("-password")
+    const { reason } = await request.json()
+
+    const seller = await User.findByIdAndUpdate(
+      params.id,
+      {
+        status: "rejected",
+        rejectionReason: reason,
+      },
+      { new: true },
+    ).select("-password")
 
     if (!seller) {
       return NextResponse.json({ error: "Seller not found" }, { status: 404 })

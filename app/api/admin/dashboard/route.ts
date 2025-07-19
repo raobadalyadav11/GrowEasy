@@ -14,25 +14,24 @@ export async function GET() {
 
     await connectDB()
 
+    // Get statistics
     const [totalUsers, totalSellers, pendingSellers, totalProducts, totalOrders, recentOrders, recentSellers] =
       await Promise.all([
         User.countDocuments({ role: "customer" }),
-        User.countDocuments({ role: "seller" }),
+        User.countDocuments({ role: "seller", status: "approved" }),
         User.countDocuments({ role: "seller", status: "pending" }),
         Product.countDocuments(),
         Order.countDocuments(),
-        Order.find()
-          .populate("customerId", "profile.firstName profile.lastName email")
-          .populate("items.productId", "name price")
-          .sort({ createdAt: -1 })
-          .limit(5),
-        User.find({ role: "seller" }).select("-password").sort({ createdAt: -1 }).limit(5),
+        Order.find().populate("customerId", "profile email").sort({ createdAt: -1 }).limit(5),
+        User.find({ role: "seller" }).sort({ createdAt: -1 }).limit(5),
       ])
 
-    const totalRevenue = await Order.aggregate([
+    // Calculate total revenue
+    const revenueResult = await Order.aggregate([
       { $match: { status: "delivered" } },
       { $group: { _id: null, total: { $sum: "$total" } } },
     ])
+    const totalRevenue = revenueResult[0]?.total || 0
 
     return NextResponse.json({
       totalUsers,
@@ -40,7 +39,7 @@ export async function GET() {
       pendingSellers,
       totalProducts,
       totalOrders,
-      totalRevenue: totalRevenue[0]?.total || 0,
+      totalRevenue,
       recentOrders,
       recentSellers,
     })

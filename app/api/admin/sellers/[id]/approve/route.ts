@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { getCurrentUser } from "@/lib/auth"
 import connectDB from "@/lib/mongodb"
 import User from "@/models/User"
-import { getCurrentUser } from "@/lib/auth"
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getCurrentUser } from "@/lib/auth"
 import { uploadToCloudinary } from "@/lib/cloudinary"
+import { getCurrentUser } from "@/lib/auth"
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,13 +11,24 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData()
     const file = formData.get("file") as File
-    const folder = (formData.get("folder") as string) || "documents"
+    const folder = formData.get("folder") as string
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    const url = await uploadToCloudinary(file, folder)
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return NextResponse.json({ error: "File size must be less than 5MB" }, { status: 400 })
+    }
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"]
+    if (!allowedTypes.includes(file.type)) {
+      return NextResponse.json({ error: "Invalid file type" }, { status: 400 })
+    }
+
+    const url = await uploadToCloudinary(file, folder || "uploads")
 
     return NextResponse.json({ url })
   } catch (error) {

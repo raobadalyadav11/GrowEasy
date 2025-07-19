@@ -11,7 +11,6 @@ export const metadata: Metadata = {
     "A comprehensive e-commerce platform with affiliate marketing, seller management, and seamless payment processing.",
   keywords: "ecommerce, marketplace, affiliate marketing, online store, razorpay",
   authors: [{ name: "ECommerce Platform" }],
-  viewport: "width=device-width, initial-scale=1",
     generator: 'v0.dev'
 }
 

@@ -1,127 +1,10 @@
-const mongoose = require("mongoose")
-const bcrypt = require("bcryptjs")
+import mongoose from "mongoose"
+import bcrypt from "bcryptjs"
+import User from "@/models/User"
+import Product from "@/models/Product"
+import Order from "@/models/Order"
+import connectDB from "@/lib/mongodb"
 
-// MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/ecommerce"
-
-// User Schema
-const userSchema = new mongoose.Schema(
-  {
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    role: { type: String, enum: ["admin", "seller", "customer"], default: "customer" },
-    status: { type: String, enum: ["pending", "approved", "rejected", "active"], default: "active" },
-    profile: {
-      firstName: { type: String, required: true },
-      lastName: { type: String, required: true },
-      phone: String,
-      avatar: String,
-    },
-    businessInfo: {
-      businessName: String,
-      businessType: String,
-      gstNumber: String,
-      address: {
-        street: String,
-        city: String,
-        state: String,
-        zipCode: String,
-        country: String,
-      },
-    },
-    bankDetails: {
-      accountNumber: String,
-      ifscCode: String,
-      accountHolderName: String,
-      bankName: String,
-    },
-    documents: {
-      aadharCard: String,
-      panCard: String,
-      bankPassbook: String,
-      gstCertificate: String,
-    },
-  },
-  { timestamps: true },
-)
-
-// Product Schema
-const productSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    description: { type: String, required: true },
-    shortDescription: String,
-    price: { type: Number, required: true },
-    comparePrice: Number,
-    stock: { type: Number, required: true, default: 0 },
-    sku: { type: String, required: true, unique: true },
-    category: { type: String, required: true },
-    subcategory: String,
-    tags: [String],
-    images: [String],
-    specifications: { type: mongoose.Schema.Types.Mixed, default: {} },
-    affiliatePercentage: { type: Number, default: 5 },
-    sellerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    status: { type: String, enum: ["pending", "approved", "rejected", "active", "inactive"], default: "pending" },
-    featured: { type: Boolean, default: false },
-    seoTitle: String,
-    seoDescription: String,
-    weight: Number,
-    dimensions: {
-      length: Number,
-      width: Number,
-      height: Number,
-    },
-  },
-  { timestamps: true },
-)
-
-// Order Schema
-const orderSchema = new mongoose.Schema(
-  {
-    orderNumber: { type: String, required: true, unique: true },
-    customerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    items: [
-      {
-        productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-        sellerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-        name: String,
-        price: Number,
-        quantity: Number,
-        image: String,
-      },
-    ],
-    subtotal: { type: Number, required: true },
-    tax: { type: Number, default: 0 },
-    shipping: { type: Number, default: 0 },
-    total: { type: Number, required: true },
-    status: {
-      type: String,
-      enum: ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"],
-      default: "pending",
-    },
-    paymentStatus: { type: String, enum: ["pending", "paid", "failed", "refunded"], default: "pending" },
-    paymentMethod: String,
-    paymentId: String,
-    shippingAddress: {
-      firstName: String,
-      lastName: String,
-      street: String,
-      city: String,
-      state: String,
-      zipCode: String,
-      country: String,
-      phone: String,
-    },
-    trackingNumber: String,
-    notes: String,
-  },
-  { timestamps: true },
-)
-
-const User = mongoose.model("User", userSchema)
-const Product = mongoose.model("Product", productSchema)
-const Order = mongoose.model("Order", orderSchema)
 
 // Sample data
 const categories = ["Electronics", "Clothing", "Books", "Home & Garden", "Sports", "Beauty", "Toys", "Automotive"]
@@ -150,7 +33,7 @@ const indianStates = [
 const indianCities = ["Mumbai", "Bangalore", "Chennai", "Pune", "Hyderabad", "Ahmedabad", "Kolkata", "Delhi"]
 
 // Generate random data
-function generateRandomString(length) {
+function generateRandomString(length: number) {
   return Math.random()
     .toString(36)
     .substring(2, length + 2)
@@ -184,11 +67,11 @@ function generateRandomAccountNumber() {
   return Math.floor(Math.random() * 10000000000000000).toString()
 }
 
-function getRandomElement(array) {
+function getRandomElement(array:any) {
   return array[Math.floor(Math.random() * array.length)]
 }
 
-function generateProductName(category, subcategory) {
+function generateProductName(category: string, subcategory: string) {
   const adjectives = [
     "Premium",
     "Professional",
@@ -206,13 +89,13 @@ function generateProductName(category, subcategory) {
   return `${getRandomElement(adjectives)} ${getRandomElement(brands)} ${subcategory}`
 }
 
-function generateProductDescription(name, category) {
+function generateProductDescription(name: string, category: string) {
   return `Experience the best in ${category.toLowerCase()} with our ${name}. This premium product offers exceptional quality, durability, and performance. Perfect for both personal and professional use, it combines cutting-edge technology with user-friendly design. Features include advanced functionality, reliable performance, and excellent value for money. Backed by our quality guarantee and customer support.`
 }
 
 async function seedDatabase() {
   try {
-    await mongoose.connect(MONGODB_URI)
+    await connectDB()
     console.log("Connected to MongoDB")
 
     // Clear existing data

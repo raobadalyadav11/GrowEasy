@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth"
 import connectDB from "@/lib/mongodb"
 import ProductEnquiry from "@/models/ProductEnquiry"
 import Notification from "@/models/Notification"
+import Product from "@/models/Product"
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,7 +32,12 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     const [enquiries, total] = await Promise.all([
-      ProductEnquiry.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      ProductEnquiry.find(filter)
+        .populate("productId", "name price images category affiliatePercentage")
+        .populate("approvedProductId", "name price images")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
       ProductEnquiry.countDocuments(filter),
     ])
 
@@ -60,26 +66,45 @@ export async function POST(request: NextRequest) {
     await connectDB()
 
     const enquiryData = await request.json()
-    const { productName, description, category, subcategory, suggestedPrice, images, specifications } = enquiryData
+    const { productId, productName, description, category, subcategory, suggestedPrice, customMessage } = enquiryData
 
-    if (!productName || !description || !category || !suggestedPrice) {
+    if (!productName || !description || !category || !suggestedPrice || !customMessage) {
       return NextResponse.json({ error: "All required fields must be provided" }, { status: 400 })
+    }
+
+    // Check if seller already has an enquiry for this product
+    const existingEnquiry = await ProductEnquiry.findOne({
+      sellerId: user.userId,
+      productId: productId,
+    })
+
+    if (existingEnquiry) {
+      return NextResponse.json({ error: "You have already submitted an enquiry for this product" }, { status: 400 })
+    }
+
+    // Verify the product exists
+    if (productId) {
+      const product = await Product.findById(productId)
+      if (!product) {
+        return NextResponse.json({ error: "Product not found" }, { status: 404 })
+      }
     }
 
     const enquiry = new ProductEnquiry({
       sellerId: user.userId,
+      productId: productId || undefined,
       productName,
       description,
       category,
       subcategory,
       suggestedPrice,
-      images: images || [],
-      specifications: specifications || {},
+      customMessage,
+      specifications: {},
     })
 
     await enquiry.save()
 
-    // Create notification for admin
+    // Create notification for seller
     const notification = new Notification({
       userId: user.userId,
       type: "enquiry",

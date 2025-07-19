@@ -1,33 +1,32 @@
 "use client"
 
-import type React from "react"
-
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
-import { ShoppingCart, Heart, Share2, Star, Filter, Search } from "lucide-react"
-import Button from "@/components/ui/Button"
-import Input from "@/components/ui/Input"
-import { Card, CardBody } from "@/components/ui/Card"
-import Badge from "@/components/ui/Badge"
+import { Star, MapPin, Phone, Mail, Globe, ShoppingCart, Heart } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { formatCurrency } from "@/lib/utils"
+import Navbar from "@/components/layout/Navbar"
+import Footer from "@/components/layout/Footer"
 
-interface SellerShop {
+interface Shop {
   _id: string
-  shopName: string
-  shopDescription: string
+  businessName: string
+  description: string
   logo?: string
   banner?: string
+  address: {
+    city: string
+    state: string
+  }
+  contact: {
+    phone: string
+    email: string
+    website?: string
+  }
+  rating: number
+  totalReviews: number
   isActive: boolean
-  customization: {
-    primaryColor: string
-    secondaryColor: string
-    theme: "light" | "dark"
-  }
-  analytics: {
-    totalVisits: number
-    totalOrders: number
-    totalRevenue: number
-  }
 }
 
 interface Product {
@@ -35,395 +34,347 @@ interface Product {
   name: string
   description: string
   price: number
-  comparePrice?: number
+  originalPrice?: number
   images: string[]
   category: string
   affiliatePercentage: number
-  status: string
-  featured: boolean
+  inStock: boolean
 }
 
-export default function ShopPage() {
-  const params = useParams()
-  const [shop, setShop] = useState<SellerShop | null>(null)
+export default function PublicShopPage({ params }: { params: { id: string } }) {
+  const [shop, setShop] = useState<Shop | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("")
-  const [cart, setCart] = useState<{ [key: string]: number }>({})
+  const [error, setError] = useState("")
 
   useEffect(() => {
-    if (params.id) {
-      fetchShop(params.id as string)
-      fetchShopProducts(params.id as string)
-    }
+    fetchShop()
+    fetchProducts()
   }, [params.id])
 
-  const fetchShop = async (shopId: string) => {
+  const fetchShop = async () => {
     try {
-      const response = await fetch(`/api/shop/${shopId}`)
+      const response = await fetch(`/api/shop/${params.id}`)
       if (response.ok) {
         const data = await response.json()
         setShop(data.shop)
-
-        // Update visit count
-        fetch(`/api/shop/${shopId}/visit`, { method: "POST" })
+      } else {
+        setError("Shop not found")
       }
     } catch (error) {
       console.error("Error fetching shop:", error)
+      setError("Failed to load shop")
     }
   }
 
-  const fetchShopProducts = async (shopId: string) => {
+  const fetchProducts = async () => {
     try {
-      const response = await fetch(`/api/shop/${shopId}/products`)
+      const response = await fetch(`/api/shop/${params.id}/products`)
       if (response.ok) {
         const data = await response.json()
         setProducts(data.products || [])
       }
     } catch (error) {
-      console.error("Error fetching shop products:", error)
+      console.error("Error fetching products:", error)
     } finally {
       setLoading(false)
     }
   }
 
-  const addToCart = (productId: string) => {
-    setCart((prev) => ({
-      ...prev,
-      [productId]: (prev[productId] || 0) + 1,
-    }))
-  }
-
-  const removeFromCart = (productId: string) => {
-    setCart((prev) => {
-      const newCart = { ...prev }
-      if (newCart[productId] > 1) {
-        newCart[productId]--
-      } else {
-        delete newCart[productId]
-      }
-      return newCart
-    })
-  }
-
-  const getCartTotal = () => {
-    return Object.entries(cart).reduce((total, [productId, quantity]) => {
-      const product = products.find((p) => p._id === productId)
-      return total + (product ? product.price * quantity : 0)
-    }, 0)
-  }
-
-  const handleCheckout = async () => {
-    if (Object.keys(cart).length === 0) {
-      alert("Your cart is empty!")
-      return
-    }
-
+  const trackVisit = async () => {
     try {
-      const orderItems = Object.entries(cart).map(([productId, quantity]) => {
-        const product = products.find((p) => p._id === productId)
-        return {
-          productId,
-          quantity,
-          price: product?.price || 0,
-          name: product?.name || "",
-        }
-      })
-
-      const response = await fetch("/api/orders/create", {
+      await fetch(`/api/shop/${params.id}/visit`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          shopId: shop?._id,
-          items: orderItems,
-          totalAmount: getCartTotal(),
-        }),
       })
-
-      if (response.ok) {
-        const data = await response.json()
-
-        // Initialize Razorpay payment
-        const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-          amount: data.order.amount,
-          currency: data.order.currency,
-          name: shop?.shopName || "Shop",
-          description: "Purchase from " + shop?.shopName,
-          order_id: data.order.id,
-          handler: async (response: any) => {
-            // Verify payment
-            const verifyResponse = await fetch("/api/orders/verify", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                orderId: data.orderId,
-              }),
-            })
-
-            if (verifyResponse.ok) {
-              setCart({})
-              alert("Payment successful! Your order has been placed.")
-            } else {
-              alert("Payment verification failed!")
-            }
-          },
-          prefill: {
-            name: "Customer",
-            email: "customer@example.com",
-            contact: "9999999999",
-          },
-          theme: {
-            color: shop?.customization.primaryColor || "#3B82F6",
-          },
-        }
-
-        const rzp = new (window as any).Razorpay(options)
-        rzp.open()
-      } else {
-        const error = await response.json()
-        alert(error.error || "Failed to create order")
-      }
     } catch (error) {
-      console.error("Error during checkout:", error)
-      alert("Checkout failed!")
+      console.error("Error tracking visit:", error)
     }
   }
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (categoryFilter === "" || product.category === categoryFilter),
-  )
+  const addToCart = (product: Product) => {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]")
+    const existingItem = cart.find((item: any) => item._id === product._id)
 
-  const categories = [...new Set(products.map((p) => p.category))]
+    if (existingItem) {
+      existingItem.quantity += 1
+    } else {
+      cart.push({ ...product, quantity: 1 })
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cart))
+    window.dispatchEvent(new Event("cartUpdated"))
+    alert("Product added to cart!")
+  }
+
+  const addToWishlist = (productId: string) => {
+    const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]")
+    if (!wishlist.includes(productId)) {
+      wishlist.push(productId)
+      localStorage.setItem("wishlist", JSON.stringify(wishlist))
+      window.dispatchEvent(new Event("wishlistUpdated"))
+      alert("Product added to wishlist!")
+    }
+  }
+
+  useEffect(() => {
+    if (shop) {
+      trackVisit()
+    }
+  }, [shop])
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="spinner w-8 h-8" />
+      <div className="min-h-screen">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse">
+            <div className="h-48 bg-neutral-200 rounded-lg mb-6"></div>
+            <div className="h-8 bg-neutral-200 rounded w-1/3 mb-4"></div>
+            <div className="h-4 bg-neutral-200 rounded w-2/3 mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-64 bg-neutral-200 rounded-lg"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <Footer />
       </div>
     )
   }
 
-  if (!shop || !shop.isActive) {
+  if (error || !shop) {
     return (
-      <div className="text-center py-12">
-        <h3 className="text-lg font-medium text-neutral-900 mb-2">Shop not available</h3>
-        <p className="text-neutral-600">This shop is currently inactive or doesn't exist.</p>
+      <div className="min-h-screen">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <h3 className="text-lg font-medium text-neutral-900 mb-2">{error || "Shop not found"}</h3>
+            <p className="text-neutral-600 mb-4">The shop you're looking for doesn't exist or is not available.</p>
+            <Button onClick={() => (window.location.href = "/")}>Go Home</Button>
+          </div>
+        </div>
+        <Footer />
       </div>
     )
   }
 
   return (
-    <div
-      className="min-h-screen"
-      style={
-        {
-          "--primary-color": shop.customization.primaryColor,
-          "--secondary-color": shop.customization.secondaryColor,
-        } as React.CSSProperties
-      }
-    >
-      {/* Add Razorpay script */}
-      <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-      {/* Shop Header */}
-      <div className="relative">
-        {shop.banner && (
-          <div className="h-64 bg-cover bg-center" style={{ backgroundImage: `url(${shop.banner})` }}>
-            <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-          </div>
-        )}
-        <div className="relative bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex items-center space-x-6">
-              {shop.logo && (
-                <img
-                  src={shop.logo || "/placeholder.svg"}
-                  alt={shop.shopName}
-                  className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
-                />
-              )}
-              <div>
-                <h1 className="text-3xl font-bold text-neutral-900">{shop.shopName}</h1>
-                <p className="text-neutral-600 mt-2">{shop.shopDescription}</p>
-                <div className="flex items-center space-x-4 mt-3 text-sm text-neutral-500">
-                  <span>{shop.analytics.totalOrders} orders</span>
-                  <span>•</span>
-                  <span>{products.length} products</span>
-                  <span>•</span>
-                  <div className="flex items-center">
-                    <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                    <span>4.8 rating</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen">
+      <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-4">
-              <CardBody>
-                <h3 className="text-lg font-semibold text-neutral-900 mb-4">Shopping Cart</h3>
-                {Object.keys(cart).length === 0 ? (
-                  <p className="text-neutral-600 text-sm">Your cart is empty</p>
-                ) : (
-                  <div className="space-y-3">
-                    {Object.entries(cart).map(([productId, quantity]) => {
-                      const product = products.find((p) => p._id === productId)
-                      if (!product) return null
-
-                      return (
-                        <div key={productId} className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-neutral-900 line-clamp-1">{product.name}</p>
-                            <p className="text-sm text-neutral-600">
-                              {formatCurrency(product.price)} × {quantity}
-                            </p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => removeFromCart(productId)}
-                              className="w-6 h-6 rounded-full bg-neutral-200 flex items-center justify-center text-sm"
-                            >
-                              -
-                            </button>
-                            <span className="text-sm font-medium">{quantity}</span>
-                            <button
-                              onClick={() => addToCart(productId)}
-                              className="w-6 h-6 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                    <div className="border-t pt-3">
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="font-semibold">Total:</span>
-                        <span className="font-bold text-lg">{formatCurrency(getCartTotal())}</span>
-                      </div>
-                      <Button className="w-full" onClick={handleCheckout}>
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        Checkout
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardBody>
-            </Card>
-          </div>
-
-          {/* Products */}
-          <div className="lg:col-span-3">
-            {/* Filters */}
-            <Card className="mb-6">
-              <CardBody>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400 h-4 w-4" />
-                    <Input
-                      placeholder="Search products..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="input">
-                    <option value="">All Categories</option>
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                  <Button variant="outline">
-                    <Filter className="h-4 w-4 mr-2" />
-                    More Filters
-                  </Button>
-                </div>
-              </CardBody>
-            </Card>
-
-            {/* Products Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => (
-                <Card key={product._id} className="hover-lift">
-                  <CardBody>
-                    <div className="relative mb-4">
-                      <img
-                        src={product.images[0] || "/placeholder.svg?height=200&width=300"}
-                        alt={product.name}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                      {product.featured && (
-                        <Badge variant="warning" className="absolute top-2 left-2">
-                          Featured
-                        </Badge>
-                      )}
-                      <button className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-neutral-50">
-                        <Heart className="h-4 w-4" />
-                      </button>
-                    </div>
-
-                    <h3 className="text-lg font-semibold text-neutral-900 mb-2 line-clamp-1">{product.name}</h3>
-                    <p className="text-neutral-600 text-sm mb-3 line-clamp-2">{product.description}</p>
-
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xl font-bold text-primary-600">{formatCurrency(product.price)}</span>
-                        {product.comparePrice && (
-                          <span className="text-sm text-neutral-500 line-through">
-                            {formatCurrency(product.comparePrice)}
-                          </span>
-                        )}
-                      </div>
-                      <Badge variant="success">{product.category}</Badge>
-                    </div>
-
-                    <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => addToCart(product._id)}
-                        style={{ backgroundColor: shop.customization.primaryColor }}
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-1" />
-                        Add to Cart
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Share2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardBody>
-                </Card>
-              ))}
-            </div>
-
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-medium text-neutral-900 mb-2">No products found</h3>
-                <p className="text-neutral-600">Try adjusting your search or filter criteria.</p>
+        {/* Shop Header */}
+        <div className="relative mb-8">
+          <div
+            className="h-48 bg-gradient-to-r from-primary-600 to-primary-800 rounded-lg flex items-center justify-center"
+            style={{
+              backgroundImage: shop.banner ? `url(${shop.banner})` : undefined,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            {!shop.banner && (
+              <div className="text-white text-center">
+                <h1 className="text-4xl font-bold mb-2">{shop.businessName}</h1>
+                <p className="text-primary-100">Quality Products • Trusted Seller</p>
               </div>
             )}
           </div>
+
+          <div className="absolute -bottom-6 left-6 flex items-end space-x-4">
+            <div className="w-24 h-24 bg-white rounded-lg border-4 border-white shadow-lg flex items-center justify-center">
+              {shop.logo ? (
+                <img
+                  src={shop.logo || "/placeholder.svg"}
+                  alt={shop.businessName}
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              ) : (
+                <div className="text-2xl font-bold text-primary-600">{shop.businessName.charAt(0)}</div>
+              )}
+            </div>
+            <div className="pb-2">
+              <h1 className="text-2xl font-bold text-white mb-1">{shop.businessName}</h1>
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-4 w-4 ${
+                        i < Math.floor(shop.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-white text-sm">({shop.totalReviews} reviews)</span>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Shop Info */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>About {shop.businessName}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-neutral-600 mb-4">{shop.description}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="h-4 w-4 text-neutral-400" />
+                    <span>
+                      {shop.address.city}, {shop.address.state}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Phone className="h-4 w-4 text-neutral-400" />
+                    <span>{shop.contact.phone}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Mail className="h-4 w-4 text-neutral-400" />
+                    <span>{shop.contact.email}</span>
+                  </div>
+                  {shop.contact.website && (
+                    <div className="flex items-center space-x-2">
+                      <Globe className="h-4 w-4 text-neutral-400" />
+                      <a
+                        href={shop.contact.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:underline"
+                      >
+                        Visit Website
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Shop Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Total Products</span>
+                    <span className="font-semibold">{products.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Average Rating</span>
+                    <div className="flex items-center space-x-1">
+                      <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                      <span className="font-semibold">{shop.rating.toFixed(1)}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Total Reviews</span>
+                    <span className="font-semibold">{shop.totalReviews}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-600">Shop Status</span>
+                    <Badge variant={shop.isActive ? "success" : "secondary"}>
+                      {shop.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Products */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Products from {shop.businessName}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {products.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-neutral-600">No products available at the moment.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {products.map((product) => (
+                  <Card
+                    key={product._id}
+                    className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                  >
+                    <CardContent className="p-0">
+                      <div className="relative overflow-hidden">
+                        <img
+                          src={product.images[0] || "/placeholder.jpg"}
+                          alt={product.name}
+                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => addToWishlist(product._id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Heart className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {!product.inStock && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <Badge variant="destructive">Out of Stock</Badge>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-4">
+                        <h3 className="font-semibold text-neutral-900 mb-2 line-clamp-2">{product.name}</h3>
+                        <p className="text-sm text-neutral-600 mb-3 line-clamp-2">{product.description}</p>
+
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg font-bold text-neutral-900">{formatCurrency(product.price)}</span>
+                            {product.originalPrice && (
+                              <span className="text-sm text-neutral-500 line-through">
+                                {formatCurrency(product.originalPrice)}
+                              </span>
+                            )}
+                          </div>
+                          {product.originalPrice && (
+                            <Badge variant="secondary" className="text-green-600">
+                              {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between mb-3">
+                          <Badge variant="outline">{product.category}</Badge>
+                          <span className="text-xs text-neutral-500">{product.affiliatePercentage}% commission</span>
+                        </div>
+
+                        <Button
+                          onClick={() => addToCart(product)}
+                          disabled={!product.inStock}
+                          className="w-full"
+                          size="sm"
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-2" />
+                          Add to Cart
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      <Footer />
     </div>
   )
 }

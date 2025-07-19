@@ -1,23 +1,24 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Package, Users, ShoppingCart, DollarSign, TrendingUp, TrendingDown } from "lucide-react"
+import { Users, ShoppingBag, Package, DollarSign, TrendingUp, Clock } from "lucide-react"
 import { Card, CardBody, CardHeader } from "@/components/ui/Card"
 import Badge from "@/components/ui/Badge"
+import { formatCurrency, formatDate } from "@/lib/utils"
 
-interface DashboardStats {
-  totalProducts: number
+interface AdminStats {
+  totalUsers: number
   totalSellers: number
+  pendingSellers: number
+  totalProducts: number
   totalOrders: number
   totalRevenue: number
-  pendingSellerApprovals: number
-  pendingProductApprovals: number
   recentOrders: any[]
-  topProducts: any[]
+  recentSellers: any[]
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export default function AdminDashboard() {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(6)].map((_, i) => (
             <Card key={i}>
               <CardBody>
                 <div className="animate-pulse">
@@ -59,36 +60,46 @@ export default function AdminDashboard() {
 
   const statCards = [
     {
-      title: "Total Products",
-      value: stats?.totalProducts || 0,
-      icon: Package,
+      title: "Total Users",
+      value: stats?.totalUsers || 0,
+      icon: Users,
       color: "primary",
-      change: "+12%",
-      changeType: "increase",
+      description: "Registered customers",
     },
     {
       title: "Total Sellers",
       value: stats?.totalSellers || 0,
-      icon: Users,
+      icon: ShoppingBag,
       color: "success",
-      change: "+8%",
-      changeType: "increase",
+      description: "Active sellers",
+    },
+    {
+      title: "Pending Approvals",
+      value: stats?.pendingSellers || 0,
+      icon: Clock,
+      color: "warning",
+      description: "Sellers awaiting approval",
+    },
+    {
+      title: "Total Products",
+      value: stats?.totalProducts || 0,
+      icon: Package,
+      color: "secondary",
+      description: "Listed products",
     },
     {
       title: "Total Orders",
       value: stats?.totalOrders || 0,
-      icon: ShoppingCart,
-      color: "warning",
-      change: "+15%",
-      changeType: "increase",
+      icon: TrendingUp,
+      color: "info",
+      description: "All time orders",
     },
     {
       title: "Total Revenue",
-      value: `₹${(stats?.totalRevenue || 0).toLocaleString()}`,
+      value: formatCurrency(stats?.totalRevenue || 0),
       icon: DollarSign,
-      color: "secondary",
-      change: "+23%",
-      changeType: "increase",
+      color: "success",
+      description: "Platform revenue",
     },
   ]
 
@@ -96,14 +107,12 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-neutral-900">Dashboard</h1>
-        <p className="text-neutral-600 mt-2">
-          Welcome to your admin dashboard. Here's what's happening with your platform today.
-        </p>
+        <h1 className="text-3xl font-bold text-neutral-900">Admin Dashboard</h1>
+        <p className="text-neutral-600 mt-2">Monitor and manage your e-commerce platform.</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {statCards.map((stat, index) => (
           <Card key={index} className="hover-lift">
             <CardBody>
@@ -111,21 +120,7 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-sm font-medium text-neutral-600">{stat.title}</p>
                   <p className="text-2xl font-bold text-neutral-900 mt-1">{stat.value}</p>
-                  <div className="flex items-center mt-2">
-                    {stat.changeType === "increase" ? (
-                      <TrendingUp className="h-4 w-4 text-success-600 mr-1" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 text-error-600 mr-1" />
-                    )}
-                    <span
-                      className={`text-sm font-medium ${
-                        stat.changeType === "increase" ? "text-success-600" : "text-error-600"
-                      }`}
-                    >
-                      {stat.change}
-                    </span>
-                    <span className="text-sm text-neutral-500 ml-1">from last month</span>
-                  </div>
+                  <p className="text-sm text-neutral-500 mt-1">{stat.description}</p>
                 </div>
                 <div className={`p-3 rounded-lg bg-${stat.color}-100`}>
                   <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
@@ -136,39 +131,6 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Pending Approvals */}
-      {(stats?.pendingSellerApprovals || stats?.pendingProductApprovals) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {stats.pendingSellerApprovals > 0 && (
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold text-neutral-900">Pending Seller Approvals</h3>
-              </CardHeader>
-              <CardBody>
-                <div className="flex items-center justify-between">
-                  <p className="text-neutral-600">{stats.pendingSellerApprovals} sellers waiting for approval</p>
-                  <Badge variant="warning">{stats.pendingSellerApprovals}</Badge>
-                </div>
-              </CardBody>
-            </Card>
-          )}
-
-          {stats.pendingProductApprovals > 0 && (
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold text-neutral-900">Pending Product Approvals</h3>
-              </CardHeader>
-              <CardBody>
-                <div className="flex items-center justify-between">
-                  <p className="text-neutral-600">{stats.pendingProductApprovals} products waiting for approval</p>
-                  <Badge variant="warning">{stats.pendingProductApprovals}</Badge>
-                </div>
-              </CardBody>
-            </Card>
-          )}
-        </div>
-      )}
-
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Orders */}
@@ -178,20 +140,23 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardBody>
             <div className="space-y-4">
-              {stats?.recentOrders?.slice(0, 5).map((order, index) => (
+              {stats?.recentOrders?.map((order, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between py-2 border-b border-neutral-100 last:border-b-0"
                 >
                   <div>
                     <p className="font-medium text-neutral-900">#{order.orderNumber}</p>
-                    <p className="text-sm text-neutral-600">{order.customerName}</p>
+                    <p className="text-sm text-neutral-600">
+                      {order.customerId?.profile?.firstName} {order.customerId?.profile?.lastName}
+                    </p>
+                    <p className="text-xs text-neutral-500">{formatDate(order.createdAt)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-neutral-900">₹{order.total}</p>
+                    <p className="font-medium text-neutral-900">{formatCurrency(order.total)}</p>
                     <Badge
                       variant={
-                        order.status === "completed" ? "success" : order.status === "pending" ? "warning" : "secondary"
+                        order.status === "delivered" ? "success" : order.status === "pending" ? "warning" : "secondary"
                       }
                     >
                       {order.status}
@@ -203,31 +168,37 @@ export default function AdminDashboard() {
           </CardBody>
         </Card>
 
-        {/* Top Products */}
+        {/* Recent Sellers */}
         <Card>
           <CardHeader>
-            <h3 className="text-lg font-semibold text-neutral-900">Top Products</h3>
+            <h3 className="text-lg font-semibold text-neutral-900">Recent Seller Applications</h3>
           </CardHeader>
           <CardBody>
             <div className="space-y-4">
-              {stats?.topProducts?.slice(0, 5).map((product, index) => (
+              {stats?.recentSellers?.map((seller, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between py-2 border-b border-neutral-100 last:border-b-0"
                 >
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-neutral-200 rounded-lg mr-3"></div>
-                    <div>
-                      <p className="font-medium text-neutral-900">{product.name}</p>
-                      <p className="text-sm text-neutral-600">{product.category}</p>
-                    </div>
+                  <div>
+                    <p className="font-medium text-neutral-900">
+                      {seller.profile?.firstName} {seller.profile?.lastName}
+                    </p>
+                    <p className="text-sm text-neutral-600">{seller.email}</p>
+                    <p className="text-xs text-neutral-500">{seller.businessInfo?.businessName}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-neutral-900">{product.sales} sales</p>
-                    <p className="text-sm text-neutral-600">₹{product.revenue}</p>
+                    <Badge
+                      variant={
+                        seller.status === "approved" ? "success" : seller.status === "pending" ? "warning" : "error"
+                      }
+                    >
+                      {seller.status}
+                    </Badge>
+                    <p className="text-xs text-neutral-500 mt-1">{formatDate(seller.createdAt)}</p>
                   </div>
                 </div>
-              )) || <p className="text-neutral-500 text-center py-4">No product data</p>}
+              )) || <p className="text-neutral-500 text-center py-4">No recent applications</p>}
             </div>
           </CardBody>
         </Card>

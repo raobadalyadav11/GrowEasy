@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -9,6 +8,7 @@ import { Eye, EyeOff, ShoppingBag } from "lucide-react"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import { Card, CardBody } from "@/components/ui/Card"
+import FileUpload from "@/components/ui/FileUpload"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -35,6 +35,12 @@ export default function RegisterPage() {
       accountHolderName: "",
       bankName: "",
     },
+    documents: {
+      gstCertificate: "",
+      aadharCard: "",
+      panCard: "",
+      bankPassbook: "",
+    },
   })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -50,6 +56,15 @@ export default function RegisterPage() {
       setError("Passwords do not match")
       setLoading(false)
       return
+    }
+
+    // Validate seller documents
+    if (formData.role === "seller") {
+      if (!formData.documents.aadharCard || !formData.documents.panCard || !formData.documents.bankPassbook) {
+        setError("Please upload all required documents for seller registration")
+        setLoading(false)
+        return
+      }
     }
 
     try {
@@ -70,6 +85,7 @@ export default function RegisterPage() {
           address: formData.address,
         }
         payload.bankDetails = formData.bankDetails
+        payload.documents = formData.documents
       }
 
       const response = await fetch("/api/auth/register", {
@@ -86,14 +102,20 @@ export default function RegisterPage() {
         throw new Error(data.error || "Registration failed")
       }
 
-      // Redirect based on role
-      const { role } = data.user
-      if (role === "admin") {
-        router.push("/admin/dashboard")
-      } else if (role === "seller") {
-        router.push("/seller/dashboard")
+      // Show success message for sellers
+      if (formData.role === "seller") {
+        alert("Registration successful! Your account is pending approval. You will be notified once approved.")
+        router.push("/auth/login")
       } else {
-        router.push("/customer/dashboard")
+        // Redirect based on role
+        const { role } = data.user
+        if (role === "admin") {
+          router.push("/admin/dashboard")
+        } else if (role === "seller") {
+          router.push("/seller/dashboard")
+        } else {
+          router.push("/customer/dashboard")
+        }
       }
     } catch (error: any) {
       setError(error.message)
@@ -120,6 +142,16 @@ export default function RegisterPage() {
         [name]: value,
       })
     }
+  }
+
+  const handleDocumentUpload = (documentType: string, url: string) => {
+    setFormData({
+      ...formData,
+      documents: {
+        ...formData.documents,
+        [documentType]: url,
+      },
+    })
   }
 
   return (
@@ -190,6 +222,7 @@ export default function RegisterPage() {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="10-digit mobile number"
+                required
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -339,6 +372,49 @@ export default function RegisterPage() {
                         onChange={handleChange}
                         required
                       />
+                    </div>
+                  </div>
+
+                  <div className="border-t border-neutral-200 pt-6">
+                    <h3 className="text-lg font-medium text-neutral-900 mb-4">Required Documents</h3>
+                    <p className="text-sm text-neutral-600 mb-6">
+                      Please upload the following documents for verification. All documents are required for seller
+                      registration.
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FileUpload
+                        label="Aadhar Card"
+                        onUpload={(url) => handleDocumentUpload("aadharCard", url)}
+                        accept="image/*,.pdf"
+                        folder="documents/aadhar"
+                        required
+                      />
+
+                      <FileUpload
+                        label="PAN Card"
+                        onUpload={(url) => handleDocumentUpload("panCard", url)}
+                        accept="image/*,.pdf"
+                        folder="documents/pan"
+                        required
+                      />
+
+                      <FileUpload
+                        label="Bank Passbook/Statement"
+                        onUpload={(url) => handleDocumentUpload("bankPassbook", url)}
+                        accept="image/*,.pdf"
+                        folder="documents/bank"
+                        required
+                      />
+
+                      {formData.gstNumber && (
+                        <FileUpload
+                          label="GST Certificate"
+                          onUpload={(url) => handleDocumentUpload("gstCertificate", url)}
+                          accept="image/*,.pdf"
+                          folder="documents/gst"
+                        />
+                      )}
                     </div>
                   </div>
                 </>

@@ -13,31 +13,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    // Find user
     const user = await User.findOne({ email })
     if (!user) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    // Verify password
     const isValidPassword = await verifyPassword(password, user.password)
     if (!isValidPassword) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    // Check if seller is approved
     if (user.role === "seller" && user.status !== "approved") {
-      return NextResponse.json({ error: "Seller account is pending approval" }, { status: 403 })
+      return NextResponse.json(
+        {
+          error: "Your seller account is pending approval. Please wait for admin approval.",
+        },
+        { status: 403 },
+      )
     }
 
-    // Create JWT token
     const token = await createToken({
       userId: user._id,
       email: user.email,
       role: user.role,
     })
 
-    // Set cookie
     await setAuthCookie(token)
 
     return NextResponse.json({
